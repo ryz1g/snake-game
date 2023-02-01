@@ -11,9 +11,10 @@ class PartialDeque {
         this.size = n;
     }
 
-    print() {
+    print() { //Contains a bug
         var i=this.front;
-        while(i!==this.back) {
+        console.log(`${this.back} ${this.front}`);
+        while(i!==this.back-1) {
             console.log(this.data[i]);
             i--;
             if(i<0) i=this.size-1;

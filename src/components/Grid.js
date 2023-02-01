@@ -1,13 +1,13 @@
 import styled from "styled-components";
-import {makeObservable, observable, action, toJS} from "mobx";
+import {makeObservable, observable, action} from "mobx";
 import {observer} from "mobx-react";
-import PartialDeque from "./PartialDeque";
+import PartialDeque from "../Utils/PartialDeque";
 
 const PlayGrid = styled.div`
     display: inline-grid;
-    grid-template-columns: repeat(50,10px);
-    grid-auto-rows: auto;
-    width : 500px;
+    grid-template-columns: repeat(${({rows}) => rows},10px);
+    grid-template-rows: repeat(${({cols}) => cols},10px);
+    width : ${({rows}) => rows*10}px;
     gap: 0px;
 `;
 
@@ -61,9 +61,9 @@ class Grid {
     moveSnake() {
         this.snake.pop();
         var nextBlock = this.snake.peek() + this.direction;
-        if(Math.floor(nextBlock/this.cols) !== Math.floor(this.snake.peek()/this.cols) && Math.abs(this.direction) === 1) {
-            if(this.direction === 1) nextBlock-=this.cols;
-            else nextBlock+=this.cols;
+        if(Math.floor(nextBlock/this.rows) !== Math.floor(this.snake.peek()/this.rows) && Math.abs(this.direction) === 1) {
+            if(this.direction === 1) nextBlock-=this.rows;
+            else nextBlock+=this.rows;
         }
         else if(nextBlock<0) nextBlock+=(this.rows*this.cols);
         else if(nextBlock>this.rows*this.cols) nextBlock-=(this.rows*this.cols);
@@ -80,7 +80,7 @@ class Grid {
     handleKeyEvent(e) {
         switch(e.key) {
             case "ArrowUp":
-                this.changeDirection(-this.cols);
+                this.changeDirection(-this.rows);
                 break;
             case "ArrowLeft":
                 this.changeDirection(-1);
@@ -89,14 +89,14 @@ class Grid {
                 this.changeDirection(1);
                 break;
             case "ArrowDown":
-                this.changeDirection(this.cols)
+                this.changeDirection(this.rows)
                 break;
             default:
         }
     }
 }
 
-const myGrid = new Grid(50,50);
+const myGrid = new Grid(40,40);
 
 setInterval(() => {
     myGrid.moveSnake();
@@ -105,7 +105,7 @@ setInterval(() => {
 const GridView = observer(({comp}) => {
     return (
         <div tabIndex={0} onKeyDown={(event) => myGrid.handleKeyEvent(event)}>
-            <PlayGrid>
+            <PlayGrid rows={myGrid.rows} cols={myGrid.cols}>
                 {comp.cells.map((x, index) => x===0 ? <Block key={index}/> : <SnakeBlock key={index}/>)}
             </PlayGrid>
             <div>

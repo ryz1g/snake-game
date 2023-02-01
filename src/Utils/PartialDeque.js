@@ -28,6 +28,12 @@ class PartialDeque {
         this.data[this.front]=num;
     }
 
+    push_back(num) {
+        this.back--;
+        if(this.back<0) this.back+=this.size;
+        this.data[this.back]=num;
+    }
+
     pop() { // Removes last element
         this.back++;
         this.back%=this.size;
@@ -49,6 +55,17 @@ class PartialDeque {
 
     isEmpty() {
         return this.back>this.front;
+    }
+
+    checkCollision() {
+        var head = this.data[this.front];
+        var i=this.front-1;
+        while(i!==this.back) {
+            if(head === this.data[i]) return true;
+            i--;
+            if(i<0) i=this.size-1;
+        }
+        return false;
     }
 }
 

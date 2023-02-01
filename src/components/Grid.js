@@ -26,6 +26,8 @@ const FoodBlock = styled(Block)`
     background-color: green;
 `;
 
+var gameOn;
+
 class Grid {
     rows;
     cols;
@@ -34,6 +36,7 @@ class Grid {
     cells;
     snake;
     direction;
+    expandNextMove;
 
     constructor(rows, cols) {
         this.rows = rows;
@@ -43,16 +46,17 @@ class Grid {
         this.cells = Array(rows*cols).fill(0);
         this.foodCell = Math.floor(Math.random()*this.totalCells);
 
-        this.snake = new PartialDeque(50);
+        this.snake = new PartialDeque(this.totalCells);
         this.snake.push(Math.floor(rows/2)*Math.floor(cols/2));
         this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+1);
         this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+2);
         this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+3);
-        // this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+4);
-        // this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+5);
-        // this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+6);
-        // this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+7);
+        this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+4);
+        this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+5);
+        this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+6);
+        this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+7);
         this.direction = 1;
+        this.expandNextMove = false;
         makeObservable(this, {
             cells: observable,
             snake: observable,
@@ -108,8 +112,18 @@ class Grid {
     }
 
     updateBoard() {
+        if(this.expandNextMove) {
+            this.expandNextMove = false;
+            this.snake.push_back(this.snake.data[this.snake.back-1]);
+        }
         this.moveSnake();
-        if(this.snake.peek() === this.foodCell) this.spawnFood();
+        if(this.snake.peek() === this.foodCell) {
+            this.spawnFood();
+            this.expandNextMove = true;
+        }
+        if(this.snake.checkCollision()) {
+            clearInterval(gameOn)
+        }
         this.paintGrid();
         // this.snake.print();
     }
@@ -133,7 +147,7 @@ class Grid {
     }
 }
 
-const GridView = observer(({comp, gameOn}) => {
+const GridView = observer(({comp}) => {
     return (
         <div tabIndex={0} onKeyDown={(event) => comp.handleKeyEvent(event)}>
             <PlayGrid rows={comp.rows} cols={comp.cols}>
@@ -171,11 +185,11 @@ const GridView = observer(({comp, gameOn}) => {
 
 function GridComponent({rows, cols}) {
     const myGrid = new Grid(rows, cols);
-    const gameOn = setInterval(() => {
+    gameOn = setInterval(() => {
         myGrid.updateBoard();
-    },125);
+    },100);
     return (
-        <GridView comp={myGrid} gameOn={gameOn}/>
+        <GridView comp={myGrid} />
     );
 };
 

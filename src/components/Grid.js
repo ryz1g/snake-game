@@ -12,18 +12,27 @@ const PlayGrid = styled.div`
 `;
 
 const Block = styled.div`
-    background-color: blue;
+    background-color: #FFE0C2;
     width: 15px;
     height: 15px;
 `;
 
+const Block2 = styled(Block)`
+    background-color: #FFD4A8;
+`;
+
 const SnakeBlock = styled(Block)`
-    background-color: red;
-    border-radius: 3px;
+    background-color: #4D93A8;
+    border-radius: 8px;
+`;
+
+const GridBorder = styled(Block)`
+    background-color: #B38B64;
 `;
 
 const FoodBlock = styled(Block)`
-    background-color: green;
+    background-color: #B3646D;
+    border-radius: 10px;
 `;
 
 var gameOn;
@@ -50,11 +59,11 @@ class Grid {
         this.snake.push(Math.floor(rows/2)*Math.floor(cols/2));
         this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+1);
         this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+2);
-        this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+3);
-        this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+4);
-        this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+5);
-        this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+6);
-        this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+7);
+        // this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+3);
+        // this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+4);
+        // this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+5);
+        // this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+6);
+        // this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+7);
         this.direction = 1;
         this.expandNextMove = false;
         makeObservable(this, {
@@ -153,21 +162,25 @@ const GridView = observer(({comp}) => {
             <PlayGrid rows={comp.rows} cols={comp.cols}>
                 {comp.cells.map((x, index) => {
                     if(x === 1) {
-                        return (
-                            <Block key={"Block"+index}>
-                                <FoodBlock key={"Food"+index}/>
-                            </Block>
+                        return (Math.floor(index/comp.rows)%2 === 0 ? 
+                            (index%2 === 0 ? <Block key={"Block"+index} ><FoodBlock key={"Food"+index}/></Block> : <Block2 key={"Block"+index} ><FoodBlock key={"Food"+index}/></Block2>)
+                            :
+                            (index%2 === 1 ? <Block key={"Block"+index} ><FoodBlock key={"Food"+index}/></Block> : <Block2 key={"Block"+index} ><FoodBlock key={"Food"+index}/></Block2>)
                         );
                     }
                     else if(x === 2) {
-                        return (
-                            <Block key={"Block"+index}>
-                                <SnakeBlock key={"snake"+index}/>
-                            </Block>
-                        );
+                        return (Math.floor(index/comp.rows)%2 === 0 ? 
+                        (index%2 === 0 ? <Block key={"Block"+index} ><SnakeBlock key={"Snake"+index}/></Block> : <Block2 key={"Block"+index} ><SnakeBlock key={"Snake"+index}/></Block2>)
+                        :
+                        (index%2 === 1 ? <Block key={"Block"+index} ><SnakeBlock key={"Snake"+index}/></Block> : <Block2 key={"Block"+index} ><SnakeBlock key={"Snake"+index}/></Block2>)
+                    );
                     }
                     else {
-                        return <Block key={"Block"+index}/>;
+                        return (Math.floor(index/comp.rows)%2 === 0 ? 
+                            (index%2 === 0 ? <Block key={"Block"+index} /> : <Block2 key={"Block"+index} />)
+                            :
+                            (index%2 === 1 ? <Block key={"Block"+index} /> : <Block2 key={"Block"+index} />)
+                        );
                     }
                 })}
             </PlayGrid>

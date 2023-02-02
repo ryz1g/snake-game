@@ -5,16 +5,16 @@ import PartialDeque from "../Utils/PartialDeque";
 
 const PlayGrid = styled.div`
     display: inline-grid;
-    grid-template-columns: repeat(${({rows}) => rows},15px);
-    grid-template-rows: repeat(${({cols}) => cols},15px);
-    width : ${({rows}) => rows*15}px;
+    grid-template-columns: repeat(${({rows}) => rows},25px);
+    grid-template-rows: repeat(${({cols}) => cols},25px);
+    width : ${({rows}) => rows*25}px;
     gap: 0px;
 `;
 
 const Block = styled.div`
     background-color: #FFE0C2;
-    width: 15px;
-    height: 15px;
+    width: 25px;
+    height: 25px;
 `;
 
 const Block2 = styled(Block)`
@@ -23,7 +23,7 @@ const Block2 = styled(Block)`
 
 const SnakeBlock = styled(Block)`
     background-color: #4D93A8;
-    border-radius: 8px;
+    // border-radius: 8px;
 `;
 
 const GridBorder = styled(Block)`
@@ -32,7 +32,12 @@ const GridBorder = styled(Block)`
 
 const FoodBlock = styled(Block)`
     background-color: #B3646D;
-    border-radius: 10px;
+    border-radius: 25px;
+`;
+
+const SnakeBlockHead = styled(Block)`
+    border-radius : ${({val}) => (val ===  4 || val === 6) ? 12 : 0}px ${({val}) => (val === 3 || val === 6) ? 12 : 0}px ${({val}) => (val === 3 || val === 5) ? 12 : 0}px ${({val}) => (val === 4 || val === 5) ? 12 : 0}px;
+    background-color: red;
 `;
 
 var gameOn;
@@ -78,7 +83,17 @@ class Grid {
             updateBoard: action,
         })
         this.cells = this.cells.map((x, index) => {
-            if(this.snake.includes(index)) return 2;
+            if(this.snake.includes(index)) {
+                if(this.snake.peek() === index) {
+                    if(this.direction === 1) return 3;
+                    else if(this.direction === -1) return 4;
+                    else if(this.direction === this.rows) return 5;
+                    else return 6;
+                }
+                else {
+                    return 2;
+                }
+            }
             else if(index === this.foodCell) return 1;
             else return 0;
         })
@@ -86,7 +101,17 @@ class Grid {
 
     paintGrid() {
         this.cells = this.cells.map((x, index) => {
-            if(this.snake.includes(index)) return 2;
+            if(this.snake.includes(index)) {
+                if(this.snake.peek() === index) {
+                    if(this.direction === 1) return 3;
+                    else if(this.direction === -1) return 4;
+                    else if(this.direction === this.rows) return 5;
+                    else return 6;
+                }
+                else {
+                    return 2;
+                }
+            }
             else if(index === this.foodCell) return 1;
             else return 0;
         })
@@ -161,25 +186,32 @@ const GridView = observer(({comp}) => {
         <div tabIndex={0} onKeyDown={(event) => comp.handleKeyEvent(event)}>
             <PlayGrid rows={comp.rows} cols={comp.cols}>
                 {comp.cells.map((x, index) => {
-                    if(x === 1) {
+                    if(x === 0) {                   // Plain Block
+                        return (Math.floor(index/comp.rows)%2 === 0 ? 
+                            (index%2 === 0 ? <Block key={"Block"+index} /> : <Block2 key={"Block"+index} />)
+                            :
+                            (index%2 === 1 ? <Block key={"Block"+index} /> : <Block2 key={"Block"+index} />)
+                        );
+                    }
+                    else if(x === 1) {              // Food Block conditions
                         return (Math.floor(index/comp.rows)%2 === 0 ? 
                             (index%2 === 0 ? <Block key={"Block"+index} ><FoodBlock key={"Food"+index}/></Block> : <Block2 key={"Block"+index} ><FoodBlock key={"Food"+index}/></Block2>)
                             :
                             (index%2 === 1 ? <Block key={"Block"+index} ><FoodBlock key={"Food"+index}/></Block> : <Block2 key={"Block"+index} ><FoodBlock key={"Food"+index}/></Block2>)
                         );
                     }
-                    else if(x === 2) {
+                    else if(x === 2) {             // Snake body conditions
                         return (Math.floor(index/comp.rows)%2 === 0 ? 
                         (index%2 === 0 ? <Block key={"Block"+index} ><SnakeBlock key={"Snake"+index}/></Block> : <Block2 key={"Block"+index} ><SnakeBlock key={"Snake"+index}/></Block2>)
                         :
                         (index%2 === 1 ? <Block key={"Block"+index} ><SnakeBlock key={"Snake"+index}/></Block> : <Block2 key={"Block"+index} ><SnakeBlock key={"Snake"+index}/></Block2>)
                     );
                     }
-                    else {
+                    else if(x >= 3 && x <= 6) {     // Snake head conditions
                         return (Math.floor(index/comp.rows)%2 === 0 ? 
-                            (index%2 === 0 ? <Block key={"Block"+index} /> : <Block2 key={"Block"+index} />)
+                            (index%2 === 0 ? <Block key={"Block"+index} ><SnakeBlockHead key={"Snake"+index} val={x}/></Block> : <Block2 key={"Block"+index} ><SnakeBlockHead key={"Snake"+index} val={x}/></Block2>)
                             :
-                            (index%2 === 1 ? <Block key={"Block"+index} /> : <Block2 key={"Block"+index} />)
+                            (index%2 === 1 ? <Block key={"Block"+index} ><SnakeBlockHead key={"Snake"+index} val={x}/></Block> : <Block2 key={"Block"+index} ><SnakeBlockHead key={"Snake"+index} val={x}/></Block2>)
                         );
                     }
                 })}

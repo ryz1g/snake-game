@@ -5,26 +5,42 @@ import PartialDeque from "../Utils/PartialDeque";
 
 const PlayGrid = styled.div`
     display: inline-grid;
-    grid-template-columns: repeat(${({rows}) => rows},15px);
-    grid-template-rows: repeat(${({cols}) => cols},15px);
-    width : ${({rows}) => rows*15}px;
+    grid-template-columns: repeat(${({rows}) => rows},25px);
+    grid-template-rows: repeat(${({cols}) => cols},25px);
+    width : ${({rows}) => rows*25}px;
     gap: 0px;
 `;
 
 const Block = styled.div`
-    background-color: blue;
-    width: 15px;
-    height: 15px;
+    background-color: #FFE0C2;
+    width: 25px;
+    height: 25px;
+`;
+
+const Block2 = styled(Block)`
+    background-color: #FFD4A8;
 `;
 
 const SnakeBlock = styled(Block)`
-    background-color: red;
-    border-radius: 3px;
+    background-color: #4D93A8;
+    // border-radius: 8px;
+`;
+
+const GridBorder = styled(Block)`
+    background-color: #B38B64;
 `;
 
 const FoodBlock = styled(Block)`
-    background-color: green;
+    background-color: #B3646D;
+    border-radius: 25px;
 `;
+
+const SnakeBlockHead = styled(Block)`
+    border-radius : ${({val}) => (val ===  4 || val === 6) ? 12 : 0}px ${({val}) => (val === 3 || val === 6) ? 12 : 0}px ${({val}) => (val === 3 || val === 5) ? 12 : 0}px ${({val}) => (val === 4 || val === 5) ? 12 : 0}px;
+    background-color: red;
+`;
+
+var gameOn;
 
 class Grid {
     rows;
@@ -34,6 +50,7 @@ class Grid {
     cells;
     snake;
     direction;
+    expandNextMove;
 
     constructor(rows, cols) {
         this.rows = rows;
@@ -43,16 +60,17 @@ class Grid {
         this.cells = Array(rows*cols).fill(0);
         this.foodCell = Math.floor(Math.random()*this.totalCells);
 
-        this.snake = new PartialDeque(50);
+        this.snake = new PartialDeque(this.totalCells);
         this.snake.push(Math.floor(rows/2)*Math.floor(cols/2));
         this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+1);
         this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+2);
-        this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+3);
+        // this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+3);
         // this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+4);
         // this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+5);
         // this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+6);
         // this.snake.push(Math.floor(rows/2)*Math.floor(cols/2)+7);
         this.direction = 1;
+        this.expandNextMove = false;
         makeObservable(this, {
             cells: observable,
             snake: observable,
@@ -65,7 +83,17 @@ class Grid {
             updateBoard: action,
         })
         this.cells = this.cells.map((x, index) => {
-            if(this.snake.includes(index)) return 2;
+            if(this.snake.includes(index)) {
+                if(this.snake.peek() === index) {
+                    if(this.direction === 1) return 3;
+                    else if(this.direction === -1) return 4;
+                    else if(this.direction === this.rows) return 5;
+                    else return 6;
+                }
+                else {
+                    return 2;
+                }
+            }
             else if(index === this.foodCell) return 1;
             else return 0;
         })
@@ -73,7 +101,17 @@ class Grid {
 
     paintGrid() {
         this.cells = this.cells.map((x, index) => {
-            if(this.snake.includes(index)) return 2;
+            if(this.snake.includes(index)) {
+                if(this.snake.peek() === index) {
+                    if(this.direction === 1) return 3;
+                    else if(this.direction === -1) return 4;
+                    else if(this.direction === this.rows) return 5;
+                    else return 6;
+                }
+                else {
+                    return 2;
+                }
+            }
             else if(index === this.foodCell) return 1;
             else return 0;
         })
@@ -108,8 +146,18 @@ class Grid {
     }
 
     updateBoard() {
+        if(this.expandNextMove) {
+            this.expandNextMove = false;
+            this.snake.push_back(this.snake.data[this.snake.back-1]);
+        }
         this.moveSnake();
-        if(this.snake.peek() === this.foodCell) this.spawnFood();
+        if(this.snake.peek() === this.foodCell) {
+            this.spawnFood();
+            this.expandNextMove = true;
+        }
+        if(this.snake.checkCollision()) {
+            clearInterval(gameOn)
+        }
         this.paintGrid();
         // this.snake.print();
     }
@@ -133,27 +181,38 @@ class Grid {
     }
 }
 
-const GridView = observer(({comp, gameOn}) => {
+const GridView = observer(({comp}) => {
     return (
         <div tabIndex={0} onKeyDown={(event) => comp.handleKeyEvent(event)}>
             <PlayGrid rows={comp.rows} cols={comp.cols}>
                 {comp.cells.map((x, index) => {
-                    if(x === 1) {
-                        return (
-                            <Block key={"Block"+index}>
-                                <FoodBlock key={"Food"+index}/>
-                            </Block>
+                    if(x === 0) {                   // Plain Block
+                        return (Math.floor(index/comp.rows)%2 === 0 ? 
+                            (index%2 === 0 ? <Block key={"Block"+index} /> : <Block2 key={"Block"+index} />)
+                            :
+                            (index%2 === 1 ? <Block key={"Block"+index} /> : <Block2 key={"Block"+index} />)
                         );
                     }
-                    else if(x === 2) {
-                        return (
-                            <Block key={"Block"+index}>
-                                <SnakeBlock key={"snake"+index}/>
-                            </Block>
+                    else if(x === 1) {              // Food Block conditions
+                        return (Math.floor(index/comp.rows)%2 === 0 ? 
+                            (index%2 === 0 ? <Block key={"Block"+index} ><FoodBlock key={"Food"+index}/></Block> : <Block2 key={"Block"+index} ><FoodBlock key={"Food"+index}/></Block2>)
+                            :
+                            (index%2 === 1 ? <Block key={"Block"+index} ><FoodBlock key={"Food"+index}/></Block> : <Block2 key={"Block"+index} ><FoodBlock key={"Food"+index}/></Block2>)
                         );
                     }
-                    else {
-                        return <Block key={"Block"+index}/>;
+                    else if(x === 2) {             // Snake body conditions
+                        return (Math.floor(index/comp.rows)%2 === 0 ? 
+                        (index%2 === 0 ? <Block key={"Block"+index} ><SnakeBlock key={"Snake"+index}/></Block> : <Block2 key={"Block"+index} ><SnakeBlock key={"Snake"+index}/></Block2>)
+                        :
+                        (index%2 === 1 ? <Block key={"Block"+index} ><SnakeBlock key={"Snake"+index}/></Block> : <Block2 key={"Block"+index} ><SnakeBlock key={"Snake"+index}/></Block2>)
+                    );
+                    }
+                    else if(x >= 3 && x <= 6) {     // Snake head conditions
+                        return (Math.floor(index/comp.rows)%2 === 0 ? 
+                            (index%2 === 0 ? <Block key={"Block"+index} ><SnakeBlockHead key={"Snake"+index} val={x}/></Block> : <Block2 key={"Block"+index} ><SnakeBlockHead key={"Snake"+index} val={x}/></Block2>)
+                            :
+                            (index%2 === 1 ? <Block key={"Block"+index} ><SnakeBlockHead key={"Snake"+index} val={x}/></Block> : <Block2 key={"Block"+index} ><SnakeBlockHead key={"Snake"+index} val={x}/></Block2>)
+                        );
                     }
                 })}
             </PlayGrid>
@@ -171,11 +230,11 @@ const GridView = observer(({comp, gameOn}) => {
 
 function GridComponent({rows, cols}) {
     const myGrid = new Grid(rows, cols);
-    const gameOn = setInterval(() => {
+    gameOn = setInterval(() => {
         myGrid.updateBoard();
-    },125);
+    },100);
     return (
-        <GridView comp={myGrid} gameOn={gameOn}/>
+        <GridView comp={myGrid} />
     );
 };
 
